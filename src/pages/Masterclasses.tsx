@@ -61,10 +61,22 @@ const Masterclasses = () => {
                 className="bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer"
                 onClick={() => navigate(`/masterclasses/${masterclass.id}`)}
               >
-                <div className="h-48 bg-gradient-glamour relative overflow-hidden">
+                <div className="relative h-48">
+                  {masterclass.coverImageUrl ? (
+                    <img
+                      src={masterclass.coverImageUrl}
+                      alt={masterclass.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full bg-gray-300 flex items-center justify-center text-gray-600">
+                      No Cover Image
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
 
+                {/* Masterclass Details */}
                 <div className="p-6">
                   <h3 className="font-serif text-xl text-glamour-dark mb-2">
                     {masterclass.title}
@@ -82,7 +94,7 @@ const Masterclasses = () => {
                         {masterclass.date ? format(masterclass.date.toDate(), "PPP") : "Date TBD"}
                       </span>
                     </div>
-                    <Button className="bg-gradient-glamour text-white">
+                    <Button className="bg-gradient-glamour text-white" onClick={() => navigate(`/masterclasses/${masterclass.id}`)} >
                       Join Now
                     </Button>
                   </div>
