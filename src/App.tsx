@@ -16,6 +16,7 @@ import CustomerSignup from "./pages/CustomerSignup";
 import ArtistSignup from "./pages/ArtistSignup";
 import Login from "./pages/Login";
 import { AuthProvider } from "./context/Authcontext";
+import UpdateSchedule from "./components/UpdateSchedule";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/CustomerDashboard" element={<CustomerDashboard />} />
           <Route path="/artist-profile/:artistId" element={<ArtistProfile />} />
           <Route path="/booking/:artistId" element={<Booking />} />
+          <Route path="/UpdateSchedule" element={<UpdateSchedule />} />
           <Route path="/masterclasses" element={<Masterclasses />} />
           <Route path="/create-masterclass" element={<CreateMasterclass />} />
           <Route path="/dashboard" element={<ArtistDashboard />} />

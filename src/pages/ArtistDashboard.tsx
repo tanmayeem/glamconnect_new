@@ -1,4 +1,5 @@
 import Navigation from "@/components/Navigation";
+import { useNavigate } from "react-router-dom"; 
 import { 
   Award, 
   DollarSign, 
@@ -15,20 +16,37 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { db } from "../../firebaseconfig";
+import { doc, getDoc } from "firebase/firestore";
+import { useAuth } from "../context/Authcontext";
 
 const ArtistDashboard = () => {
   const [activeSection, setActiveSection] = useState<'dashboard' | 'profile'>('dashboard');
+  const [artistName, setArtistName] = useState('Loading...');
+  const { currentUser } = useAuth();
+  const navigate = useNavigate(); 
+
+  useEffect(() => {
+    const fetchArtistName = async () => {
+      if (!currentUser) return;
+      try {
+        const artistDoc = doc(db, "artists", currentUser?.uid); 
+        const snapshot = await getDoc(artistDoc);
+        if (snapshot.exists()) {
+          setArtistName(snapshot.data().name);
+        } else {
+          setArtistName("Unknown Artist");
+        }
+      } catch (error) {
+        console.error("Error fetching artist:", error);
+        setArtistName("Error Loading");
+      }
+    };
+
+    fetchArtistName();
+  }, [currentUser]);
+
 
   const renderDashboardContent = () => (
     <div className="space-y-8">
@@ -38,7 +56,7 @@ const ArtistDashboard = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="font-serif text-4xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                Welcome back, Emma
+                Welcome back, {artistName || "Unknown Artist"}
               </h1>
               <p className="text-gray-600 font-light">
                 Your artistry makes a difference
@@ -244,124 +262,44 @@ const ArtistDashboard = () => {
     </div>
   );
 
-  const renderProfileContent = () => (
-    <div className="space-y-8">
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-pink-600/10 rounded-3xl blur-3xl" />
-        <div className="relative bg-white/90 backdrop-blur-sm p-8 rounded-3xl border border-purple-100 shadow-xl">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <Avatar className="h-32 w-32 ring-4 ring-purple-100">
-              <AvatarImage src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158" />
-              <AvatarFallback>ET</AvatarFallback>
-            </Avatar>
-            <div className="text-center md:text-left">
-              <h2 className="font-serif text-4xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Emma Thompson
-              </h2>
-              <p className="text-gray-600 mt-2">Professional Makeup Artist</p>
-              <div className="flex items-center gap-2 mt-4 justify-center md:justify-start">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <span className="text-gray-700">(98 reviews)</span>
-              </div>
-            </div>
-            <Button className="ml-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg">
-              Edit Profile
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow bg-white">
-          <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
-            <CardTitle className="font-serif text-xl text-gray-800">
-              Personal Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            {[
-              { label: "Email", value: "emma.thompson@example.com" },
-              { label: "Phone", value: "+1 (555) 123-4567" },
-              { label: "Location", value: "New York, NY" },
-              { label: "Member Since", value: "January 2023" }
-            ].map((info, index) => (
-              <div key={index} className="space-y-1">
-                <label className="text-sm text-gray-600">{info.label}</label>
-                <p className="text-gray-900 font-medium">{info.value}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow bg-white">
-          <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
-            <CardTitle className="font-serif text-xl text-gray-800">
-              Professional Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            {[
-              { label: "Specialization", value: "Bridal Makeup, Editorial, Special Effects" },
-              { label: "Experience", value: "5+ years" },
-              { label: "Languages", value: "English, Spanish" },
-              { label: "Certifications", value: "Professional Makeup Artist Certificate, Advanced SFX" }
-            ].map((info, index) => (
-              <div key={index} className="space-y-1">
-                <label className="text-sm text-gray-600">{info.label}</label>
-                <p className="text-gray-900 font-medium">{info.value}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <SidebarProvider defaultOpen>
-        <div className="flex">
-          <Sidebar>
-            <SidebarHeader>
-              <SidebarTrigger />
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => setActiveSection('dashboard')}
-                    isActive={activeSection === 'dashboard'}
-                  >
-                    <Award className="w-4 h-4" />
-                    <span>Dashboard</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => setActiveSection('profile')}
-                    isActive={activeSection === 'profile'}
-                  >
-                    <User className="w-4 h-4" />
-                    <span>Profile</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarContent>
-          </Sidebar>
-
-          <main className="flex-1 container mx-auto px-4 pt-24 pb-12">
-            <div className="max-w-7xl mx-auto">
-              {activeSection === 'dashboard' ? renderDashboardContent() : renderProfileContent()}
-            </div>
-          </main>
+      {/* Quick Links Section */}
+      <div className="container mx-auto px-4 pt-24">
+        <div className="flex gap-4 mb-8">
+          <Button
+            onClick={() => setActiveSection('dashboard')}
+            variant={activeSection === 'dashboard' ? 'default' : 'outline'}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg"
+          >
+            <Calendar className="mr-2 h-4 w-4" />
+            Update Schedule
+          </Button>
+          <Button
+            onClick={() => setActiveSection('profile')}
+            variant={activeSection === 'profile' ? 'default' : 'outline'}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg"
+          >
+            <User className="mr-2 h-4 w-4" />
+            Profile
+          </Button>
+          <Button
+            onClick={() => navigate('/create-masterclass')}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg"
+          >
+            <BookOpen className="mr-2 h-4 w-4" />
+            Create Masterclass
+          </Button>
         </div>
-      </SidebarProvider>
+      </div>
+
+      <main className="container mx-auto px-4 pb-12">
+        <div className="max-w-7xl mx-auto">
+          {activeSection === 'dashboard' ? renderDashboardContent(): renderProfileContent()}
+        </div>
+      </main>
 
       <Footer />
     </div>
