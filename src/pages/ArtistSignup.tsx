@@ -13,6 +13,7 @@ import { specialties } from "@/components/constant";
 import {
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification
 } from "firebase/auth";
 
 const ArtistSignup = () => {
@@ -31,11 +32,6 @@ const ArtistSignup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // const handleChange = (
-  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  // ) => {
-  //   setFormData({ ...formData, [e.target.name]: e.target.value });
-  // };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -80,6 +76,9 @@ const ArtistSignup = () => {
       await updateProfile(userCredential.user, {
         displayName: formData.name,
       });
+
+      await sendEmailVerification(userCredential.user);
+
       await setDoc(doc(db, "artists", userCredential.user.uid), {
         uid: userCredential.user.uid,
         name: formData.name,

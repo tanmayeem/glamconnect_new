@@ -1,117 +1,158 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Calendar, Heart, MapPin, Settings, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader } from "lucide-react";
+import { useAuth } from "@/context/Authcontext";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebaseconfig";
+import { useToast } from "@/components/ui/use-toast";
+
+// Helper function to compute initials from a name
+const getInitials = (name: string): string => {
+  if (!name) return "";
+  const names = name.trim().split(" ");
+  if (names.length === 1) return names[0].charAt(0).toUpperCase();
+  return (
+    names[0].charAt(0).toUpperCase() + names[names.length - 1].charAt(0).toUpperCase()
+  );
+};
 
 const CustomerProfile = () => {
+  const { currentUser } = useAuth();
+  const { toast } = useToast();
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    uid: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Fetch the customer's profile from Firestore
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!currentUser) return;
+      setLoading(true);
+      try {
+        const profileDocRef = doc(db, "customers", currentUser.uid);
+        const snapshot = await getDoc(profileDocRef);
+        if (snapshot.exists()) {
+          setProfile(snapshot.data() as typeof profile);
+        } else {
+          console.log("No customer profile found");
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch profile",
+          variant: "destructive",
+        });
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, [currentUser, toast]);
+
+  // Handle saving updates to the customer's profile
+  const handleSaveProfile = async () => {
+    if (!currentUser) return;
+    setLoading(true);
+    try {
+      const profileDocRef = doc(db, "customers", currentUser.uid);
+      await updateDoc(profileDocRef, {
+        name: profile.name,
+        phone: profile.phone,
+      });
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Update Failed",
+        description: "There was an error updating your profile.",
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
+  };
+
   return (
-    <div className="min-h-screen bg-glamour-light">
+    <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
       <main className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
-          {/* Profile Header */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-            <div className="h-48 bg-gradient-to-r from-glamour-pink to-glamour-gold relative">
-              <div className="absolute -bottom-16 left-8">
-                <Avatar className="h-32 w-32 border-4 border-white">
-                  <AvatarImage src="/placeholder.svg" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-              </div>
-              <div className="absolute top-4 right-4">
-                <Button variant="outline" className="bg-white/80 backdrop-blur-sm">
-                  <Settings className="w-4 h-4" /> Edit Profile
-                </Button>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          Customer Profile
+        </h1>
+        {loading ? (
+          <div className="flex flex-col items-center">
+            <Loader className="animate-spin h-8 w-8" />
+            <p>Loading Profile...</p>
+          </div>
+        ) : (
+          <div className="bg-white p-8 rounded-xl shadow-md space-y-6">
+            {/* Avatar using initials */}
+            <div className="mb-6">
+              <Label>Avatar</Label>
+              <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-3xl font-bold text-white">
+                  {getInitials(profile.name)}
+                </span>
               </div>
             </div>
-            
-            <div className="pt-20 p-8">
-              <h1 className="font-serif text-3xl text-glamour-dark mb-2">Jane Doe</h1>
-              <p className="text-glamour-dark/60 flex items-center gap-2">
-                <MapPin className="w-4 h-4" /> Los Angeles, CA
-              </p>
+            <div className="mb-6">
+              <Label htmlFor="name">Name</Label>
+              {isEditing ? (
+                <Input
+                  id="name"
+                  value={profile.name}
+                  onChange={(e) =>
+                    setProfile({ ...profile, name: e.target.value })
+                  }
+                  className="mt-1"
+                />
+              ) : (
+                <p className="text-lg">{profile.name}</p>
+              )}
+            </div>
+            <div className="mb-6">
+              <Label htmlFor="phone">Phone</Label>
+              {isEditing ? (
+                <Input
+                  id="phone"
+                  value={profile.phone}
+                  onChange={(e) =>
+                    setProfile({ ...profile, phone: e.target.value })
+                  }
+                  className="mt-1"
+                />
+              ) : (
+                <p className="text-lg">{profile.phone}</p>
+              )}
+            </div>
+            <div className="mb-6">
+              <Label>Email</Label>
+              <p className="text-lg">{profile.email}</p>
+            </div>
+            <div>
+              {isEditing ? (
+                <Button onClick={handleSaveProfile} disabled={loading}>
+                  {loading ? "Saving..." : "Save Profile"}
+                </Button>
+              ) : (
+                <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+              )}
             </div>
           </div>
-
-          {/* Upcoming Appointments */}
-          <Card className="mb-8">
-            <CardHeader>
-              <h2 className="font-serif text-2xl text-glamour-dark">Upcoming Appointments</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {[
-                  {
-                    artist: "Sarah Anderson",
-                    service: "Bridal Makeup Trial",
-                    date: "March 15, 2024",
-                    time: "2:00 PM",
-                  },
-                  {
-                    artist: "Michael Chen",
-                    service: "Special Event Makeup",
-                    date: "March 20, 2024",
-                    time: "10:00 AM",
-                  },
-                ].map((appointment) => (
-                  <div
-                    key={appointment.date}
-                    className="flex justify-between items-center p-4 rounded-lg border border-glamour-gold/20"
-                  >
-                    <div>
-                      <h3 className="font-medium text-glamour-dark">{appointment.artist}</h3>
-                      <p className="text-sm text-glamour-dark/60">{appointment.service}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-glamour-dark/60">
-                        <Calendar className="w-4 h-4 inline mr-1" />
-                        {appointment.date}
-                      </div>
-                      <div className="text-sm text-glamour-dark/60">{appointment.time}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Favorite Artists */}
-          <Card>
-            <CardHeader>
-              <h2 className="font-serif text-2xl text-glamour-dark">Favorite Artists</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((artist) => (
-                  <div
-                    key={artist}
-                    className="flex items-center gap-4 p-4 rounded-lg border border-glamour-gold/20"
-                  >
-                    <Avatar>
-                      <AvatarImage src="/placeholder.svg" />
-                      <AvatarFallback>AR</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-glamour-dark">Artist Name</h3>
-                      <div className="flex items-center gap-1 text-glamour-gold">
-                        <Star className="w-4 h-4 fill-current" />
-                        <span className="text-sm">4.9</span>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="icon">
-                      <Heart className="w-4 h-4 fill-current text-glamour-pink" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        )}
       </main>
-
       <Footer />
     </div>
   );

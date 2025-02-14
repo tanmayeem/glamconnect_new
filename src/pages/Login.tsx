@@ -5,14 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Mail, Lock } from "lucide-react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore"; // Firestore functions
-import { auth, db } from "../../firebaseconfig"; // Ensure Firestore `db` is imported
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore"; 
+import { auth, db } from "../../firebaseconfig";  
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -21,7 +22,6 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Sign in user
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const uid = user.uid;
@@ -61,7 +61,7 @@ const Login = () => {
       if (error instanceof Error) {
         errorMessage = error.message;
       } else if (typeof error === "object" && error !== null && "code" in error) {
-        switch ((error as {code : string}).code) {
+        switch ((error as { code: string }).code) {
           case "auth/invalid-email":
             errorMessage = "Invalid email format.";
             break;
@@ -85,6 +85,35 @@ const Login = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address to reset your password.",
+      });
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: "Reset Email Sent",
+        description: "A password reset email has been sent to your email address.",
+      });
+    } catch (error: unknown) {
+      let errorMessage = "Failed to send reset email.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      toast({
+        title: "Error",
+        description: errorMessage,
+      });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -143,6 +172,17 @@ const Login = () => {
             </Button>
           </form>
 
+          {/* <div className="mt-4 text-right">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={resetLoading}
+              className="text-sm text-pink-600 hover:text-pink-700"
+            >
+              {resetLoading ? "Sending..." : "Forgot Password?"}
+            </button>
+          </div> */}
+
           <div className="mt-6 text-center space-y-4">
             <p className="text-sm text-glamour-dark/60">
               Don't have an account?{" "}
@@ -164,14 +204,17 @@ const Login = () => {
             </p>
 
             <p className="text-sm text-glamour-dark/60">
-              Password dont remeber , Dont worry?{" "}
-              <Link
-                to="/signup/artist"
-                className="text-pink-600 hover:text-pink-700 font-medium"
-              >
-                Sign up as Artist
-              </Link>
+            Dont Worry! 
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={resetLoading}
+              className="text-sm text-pink-600 hover:text-pink-700"
+            >
+              {resetLoading ? "Sending..." : " Forgot Password?"}
+            </button>
             </p>
+
           </div>
         </div>
       </div>

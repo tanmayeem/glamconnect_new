@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { User, Mail, Lock, Phone, Eye, EyeOff } from "lucide-react";
 import PasswordStrengthIndicator from "@/components/PasswordStrengthIndicator";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification , updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth , db} from "../../firebaseconfig";
 
@@ -23,8 +23,23 @@ const CustomerSignup = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setFormData({ ...formData, [e.target.name]: e.target.value });
+  // };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+  
+    const capitalizedValue = name === 'name'
+      ? value
+          .split(' ')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ')
+      : value;
+  
+    setFormData({ ...formData, [name]: capitalizedValue });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,12 +66,14 @@ const CustomerSignup = () => {
         displayName: formData.name,
       });
 
+      await sendEmailVerification(userCredential.user);
+
       await setDoc(doc(db, "customers", userCredential.user.uid), {
         uid: userCredential.user.uid,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        createdAt: new Date(),
+      createdAt: new Date(),
       });
 
       toast({

@@ -1,5 +1,5 @@
+import { useEffect, useState } from "react";
 import Navigation from "@/components/Navigation";
-import { useNavigate } from "react-router-dom"; 
 import { 
   Award, 
   DollarSign, 
@@ -16,22 +16,32 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { db } from "../../firebaseconfig";
-import { doc, getDoc } from "firebase/firestore";
+import { 
+  doc, 
+  getDoc, 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  getDocs 
+} from "firebase/firestore";
+import { format } from "date-fns";
 import { useAuth } from "../context/Authcontext";
 
 const ArtistDashboard = () => {
   const [activeSection, setActiveSection] = useState<'dashboard' | 'profile'>('dashboard');
   const [artistName, setArtistName] = useState('Loading...');
+  const [recentMessages, setRecentMessages] = useState<any[]>([]);
   const { currentUser } = useAuth();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchArtistName = async () => {
       if (!currentUser) return;
       try {
-        const artistDoc = doc(db, "artists", currentUser?.uid); 
+        const artistDoc = doc(db, "artists", currentUser.uid);
         const snapshot = await getDoc(artistDoc);
         if (snapshot.exists()) {
           setArtistName(snapshot.data().name);
@@ -47,7 +57,55 @@ const ArtistDashboard = () => {
     fetchArtistName();
   }, [currentUser]);
 
+  useEffect(() => {
+    const fetchRecentMessages = async () => {
+      if (!currentUser) return;
+      try {
+        const bookingsRef = collection(db, "bookings");
+        const q = query(
+          bookingsRef,
+          where("artistId", "==", currentUser.uid),
+          orderBy("createdAt", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        console.log("Recent messages count:", querySnapshot.size);
+        const messagesData = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            customerName: data.customerName,
+            customerId: data.customerId,
+            date: data.date,
+            time: data.time,
+            createdAt: data.createdAt,
+          };
+        });
+        const messagesWithNames = await Promise.all(
+          messagesData.map(async (msg) => {
+            if (!msg.customerName && msg.customerId) {
+              try {
+                const customerDocRef = doc(db, "customers", msg.customerId);
+                const custSnapshot = await getDoc(customerDocRef);
+                if (custSnapshot.exists()) {
+                  return { ...msg, customerName: custSnapshot.data().name };
+                }
+              } catch (error) {
+                console.error("Error fetching customer name for message", msg.id, error);
+              }
+            }
+            return msg;
+          })
+        );
+        setRecentMessages(messagesWithNames);
+      } catch (error) {
+        console.error("Error fetching recent messages:", error);
+      }
+    };
 
+    fetchRecentMessages();
+  }, [currentUser]);
+
+  // Render dashboard content (simplified example)
   const renderDashboardContent = () => (
     <div className="space-y-8">
       <div className="relative">
@@ -62,7 +120,10 @@ const ArtistDashboard = () => {
                 Your artistry makes a difference
               </p>
             </div>
-            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg" onClick={() => navigate("/UpdateSchedule")}>
+            <Button 
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg" 
+              onClick={() => navigate("/UpdateSchedule")}
+            >
               <Calendar className="mr-2 h-4 w-4" />
               Update Availability
             </Button>
@@ -187,77 +248,47 @@ const ArtistDashboard = () => {
             ))}
           </CardContent>
         </Card>
+      </div>
 
-        <div className="space-y-8">
-          <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow bg-white">
-            <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
-              <CardTitle className="font-serif text-2xl text-gray-800 flex items-center gap-2">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-                Performance Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {[
-                  { label: "Booking Rate", value: "85%", color: "bg-purple-600" },
-                  { label: "Client Satisfaction", value: "92%", color: "bg-pink-600" },
-                  { label: "Revenue Growth", value: "23%", color: "bg-purple-500" }
-                ].map((metric, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">{metric.label}</span>
-                      <span className="font-medium text-gray-900">{metric.value}</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full">
-                      <div 
-                        className={`h-full rounded-full ${metric.color}`}
-                        style={{ width: metric.value }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow bg-white">
-            <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
-              <CardTitle className="font-serif text-2xl text-gray-800 flex items-center gap-2">
-                <MessageSquare className="w-6 h-6 text-purple-600" />
-                Recent Messages
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              {[
-                {
-                  name: "Sarah Johnson",
-                  message: "Looking forward to our session!",
-                  time: "2 hours ago",
-                },
-                {
-                  name: "Emily Davis",
-                  message: "Thank you for the amazing work!",
-                  time: "4 hours ago",
-                },
-              ].map((message, index) => (
+      {/* Recent Messages Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow bg-white">
+          <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+            <CardTitle className="font-serif text-2xl text-gray-800 flex items-center gap-2">
+              <MessageSquare className="w-6 h-6 text-purple-600" />
+              Recent Messages
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            {recentMessages.length > 0 ? (
+              recentMessages.map((msg) => (
                 <div
-                  key={index}
+                  key={msg.id}
                   className="flex items-start gap-4 p-4 rounded-xl border border-purple-100 hover:border-purple-200 transition-all hover:shadow-md bg-white"
                 >
-                  <Avatar>
-                    <AvatarImage src={`https://i.pravatar.cc/40?img=${index}`} />
-                    <AvatarFallback>{message.name[0]}</AvatarFallback>
-                  </Avatar>
+                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                    <span className="text-lg font-bold text-gray-700">
+                      {msg.customerName ? msg.customerName[0] : "U"}
+                    </span>
+                  </div>
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{message.name}</h3>
-                    <p className="text-sm text-gray-600">{message.message}</p>
-                    <p className="text-xs text-gray-500 mt-1">{message.time}</p>
+                    <h3 className="font-medium text-gray-900">
+                      {msg.customerName || "Unknown Customer"}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      booked an appointment on {format(new Date(msg.date), "PPP")} at {msg.time}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {msg.createdAt ? format(new Date(msg.createdAt), "PPP p") : ""}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-600">No recent bookings.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -269,7 +300,6 @@ const ArtistDashboard = () => {
       {/* Quick Links Section */}
       <div className="container mx-auto px-4 pt-24">
         <div className="flex gap-4 mb-8">
-       
           <Button
             onClick={() => navigate('/artist-profile')}
             variant={activeSection === 'profile' ? 'default' : 'outline'}

@@ -14,9 +14,11 @@ import ArtistDashboard from "./pages/ArtistDashboard";
 import CustomerSignup from "./pages/CustomerSignup";
 import ArtistSignup from "./pages/ArtistSignup";
 import Login from "./pages/Login";
+import Booking from "./components/BookingSession";
 import { AuthProvider } from "./context/Authcontext";
 import UpdateSchedule from "./components/UpdateSchedule";
 import MasterclassDetails from "./components/MasterclassDetails";
+import CustomerProfile from "./pages/CustomerProfile";
 
 const queryClient = new QueryClient();
 
@@ -29,11 +31,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/CustomerProfile" element={<CustomerProfile />} />
           <Route path="/search" element={<SearchArtists />} />
           <Route path="/CustomerDashboard" element={<CustomerDashboard />} />
           {/* <Route path="/artist-profile/:artistId" element={<ArtistProfile />} /> */}
           <Route path="/artist-profile" element={<ArtistProfile />}  ></Route>
-          {/* <Route path="/booking/:artistId" element={<Booking />} /> */}
+          {/* <Route path="/booking/" element={<Booking />} /> */}
+          <Route path="/booking/:artistId" element={<Booking />} />
           <Route path="/UpdateSchedule" element={<UpdateSchedule />} />
           <Route path="/masterclasses" element={<Masterclasses />} />
           <Route path="/masterclasses/:id" element={<MasterclassDetails />} />

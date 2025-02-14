@@ -44,18 +44,17 @@ const Navigation = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate("/"); // Redirect to home after logout
+      navigate("/");  
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
 
-  // 🔥 Determine redirect URL for "Home"
   const homeRedirect = currentUser
     ? userType === "artist"
       ? "/dashboard"
       : userType === "customer"
-      ? "/customer-dashboard"
+      ? "/CustomerDashboard"
       : "/"
     : "/";
 
