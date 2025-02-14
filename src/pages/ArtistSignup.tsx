@@ -31,10 +31,25 @@ const ArtistSignup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // const handleChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  // ) => {
+  //   setFormData({ ...formData, [e.target.name]: e.target.value });
+  // };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+  
+    const capitalizedValue = name === 'name'
+      ? value
+          .split(' ')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ')
+      : value;
+  
+    setFormData({ ...formData, [name]: capitalizedValue });
   };
 
   const handleSpecialtyChange = (e) => {

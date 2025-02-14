@@ -3,8 +3,16 @@ import { Calendar, CreditCard, Heart, Star } from "lucide-react";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useAuth } from "@/context/Authcontext";
+import { useNavigate } from "react-router-dom"; 
+
 
 const CustomerDashboard = () => {
+    const [artistName, setArtistName] = useState('Loading...');
+    const { currentUser } = useAuth();
+    const navigate = useNavigate(); 
+
   return (
     <div className="min-h-screen bg-glamour-light">
       <Navigation />

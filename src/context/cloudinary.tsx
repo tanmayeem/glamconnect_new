@@ -8,19 +8,32 @@ import { v2 as cloudinary } from 'cloudinary';
         api_secret: '0vy-6tipERGSdtfKcx1lga4MHYY'  
     });
     
-     const uploadResult = await cloudinary.uploader
-       .upload(
-           'https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg', {
-               public_id: 'shoes',
-           }
-       )
-       .catch((error) => {
-           console.log(error);
-       });
+    const uploadImageToCloudinary = async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "profolio");  
+        formData.append("cloud_name", "dznft1m2s");  
     
-    console.log(uploadResult);
+        try {
+          const response = await fetch(
+            `https://api.cloudinary.com/v1_1/dznft1m2s/image/upload`,
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
     
-    const optimizeUrl = cloudinary.url('shoes', {
+          const data = await response.json();
+          return data.secure_url;  
+        } catch (error) {
+          console.error("Error uploading image to Cloudinary:", error);
+          return null;
+        }
+      };
+    
+    console.log(uploadImageToCloudinary);
+    
+    const optimizeUrl = cloudinary.url('', {
         fetch_format: 'auto',
         quality: 'auto'
     });

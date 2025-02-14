@@ -1,248 +1,374 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { db } from "../../firebaseconfig";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useAuth } from "../context/Authcontext";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ImagePlus, Save, Loader } from "lucide-react";
 import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
-import { Camera, Save } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { useEffect, useState } from "react";
 
-import { db, storage } from "../../firebaseconfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { useAuth } from "../context/Authcontext";
-
-const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  bio: z.string().min(10, { message: "Bio must be at least 10 characters." }),
-  location: z.string().min(2, { message: "Location must be at least 2 characters." }),
-  specialization: z.string().min(2, { message: "Specialization must be at least 2 characters." }),
-  experience: z.string().min(1, { message: "Experience is required." }),
-  rate: z.string().min(1, { message: "Rate is required." }),
-});
-
-const ArtistProfileEdit = () => {
+const ArtistProfile = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      bio: "",
-      location: "",
-      specialization: "",
-      experience: "",
-      rate: "",
-    },
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [profile, setProfile] = useState({
+    name: "",
+    experience: "",
+    specialties: "",
+    phone: "",
+    email: "",
+    profilePicture: "",
+    uid: "",
+    portfolio: [] as string[],
   });
 
-  // 🔥 Fetch artist data from Firestore
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const portfolioInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
-    if (currentUser) {
-      const fetchArtistData = async () => {
-        try {
-          const artistRef = doc(db, "artists", currentUser.uid);
-          const artistSnap = await getDoc(artistRef);
-
-          if (artistSnap.exists()) {
-            const artistData = artistSnap.data();
-            form.reset({
-              name: artistData.name || "",
-              bio: artistData.bio || "",
-              location: artistData.location || "",
-              specialization: artistData.specialization || "",
-              experience: artistData.experience || "",
-              rate: artistData.rate || "",
-            });
-
-            if (artistData.profileImage) {
-              setImagePreview(artistData.profileImage);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching artist data:", error);
+    const fetchProfile = async () => {
+      if (!currentUser) return;
+      setLoading(true);
+      try {
+        const artistDoc = doc(db, "artists", currentUser.uid);
+        const snapshot = await getDoc(artistDoc);
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          setProfile({
+            name: data.name || "",
+            experience: data.experience || "",
+            specialties: data.specialties || "",
+            phone: data.phone || "",
+            email: data.email || "",
+            profilePicture: data.profilePicture || "",
+            uid: data.uid || "",
+            portfolio: data.portfolio || [],
+          });
+        } else {
+          console.log("No artist profile found.");
         }
-      };
-
-      fetchArtistData();
-    }
-  }, [currentUser, form]);
-
-  // 🔥 Handle Image Upload & Preview
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file)); // Preview image before upload
-    }
-  };
-
-  // 🔥 Upload Image to Firebase Storage
-  const uploadImage = async () => {
-    if (!image) {
-      toast({ title: "Error!", description: "Please select an image to upload." });
-      return "";
-    }
-
-    setLoading(true);
-    try {
-      const imageRef = ref(storage, `artists/${currentUser.uid}/profile.jpg`);
-      const uploadTask = await uploadBytesResumable(imageRef, image);
-      const url = await getDownloadURL(uploadTask.ref);
-      return url;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      toast({ title: "Error!", description: "Image upload failed. Please try again." });
-      return "";
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🔥 Handle Form Submission
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!currentUser) return;
-
-    setLoading(true);
-    try {
-      let profileImageUrl = imagePreview; // Use existing image URL
-      if (image) {
-        profileImageUrl = await uploadImage();
+      } catch (error) {
+        console.error("Error fetching profile:", error);
       }
+      setLoading(false);
+    };
 
-      const artistRef = doc(db, "artists", currentUser.uid);
-      await updateDoc(artistRef, {
-        ...values,
-        profileImage: profileImageUrl,
+    fetchProfile();
+  }, [currentUser]);
+
+  const handleSaveProfile = async () => {
+    if (!currentUser) return;
+    setLoading(true);
+    try {
+      const artistDoc = doc(db, "artists", currentUser.uid);
+      await updateDoc(artistDoc, {
+        name: profile.name,
+        experience: profile.experience,
+        specialties: profile.specialties,
+        phone: profile.phone,
+        profilePicture: profile.profilePicture,
+        // Note: Portfolio images are updated separately
       });
 
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
+        title: "Profile Updated!",
+        description: "Your changes have been saved successfully.",
       });
+
+      setIsEditing(false);
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast({ title: "Error!", description: "Profile update failed. Try again." });
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Update Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     }
-  }
+    setLoading(false);
+  };
+
+  // Upload profile image to Cloudinary and update Firestore
+  const uploadImageToCloudinary = async (file: File) => {
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "Display_picture");
+    formData.append("cloud_name", "dznft1m2s");
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/dznft1m2s/image/upload`,
+        { method: "POST", body: formData }
+      );
+      const data = await response.json();
+      if (!data.secure_url) throw new Error("Upload failed");
+
+      if (currentUser) {
+        const artistDoc = doc(db, "artists", currentUser.uid);
+        await updateDoc(artistDoc, { profilePicture: data.secure_url });
+      }
+
+      setProfile((prev) => ({ ...prev, profilePicture: data.secure_url }));
+
+      toast({
+        title: "Profile Picture Updated!",
+        description: "Your new profile picture has been saved.",
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Upload Failed",
+        description: "There was an error uploading your image. Try again.",
+        variant: "destructive",
+      });
+    }
+    setUploadingImage(false);
+  };
+
+  const uploadPortfolioImageToCloudinary = async (file: File) => {
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "portfolio");
+    formData.append("cloud_name", "dznft1m2s");
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/dznft1m2s/image/upload`,
+        { method: "POST", body: formData }
+      );
+      const data = await response.json();
+      if (!data.secure_url) throw new Error("Upload failed");
+
+      const updatedPortfolio = profile.portfolio
+        ? [...profile.portfolio, data.secure_url]
+        : [data.secure_url];
+
+      if (updatedPortfolio.length > 5) {
+        toast({
+          title: "Upload Failed",
+          description: "You can upload up to 5 images only.",
+          variant: "destructive",
+        });
+        setUploadingImage(false);
+        return;
+      }
+
+      if (currentUser) {
+        const artistDoc = doc(db, "artists", currentUser.uid);
+        await updateDoc(artistDoc, { portfolio: updatedPortfolio });
+      }
+
+      setProfile((prev) => ({ ...prev, portfolio: updatedPortfolio }));
+
+      toast({
+        title: "Portfolio Image Uploaded!",
+        description: "Your portfolio image has been saved.",
+      });
+    } catch (error) {
+      console.error("Error uploading portfolio image:", error);
+      toast({
+        title: "Upload Failed",
+        description: "There was an error uploading your portfolio image. Try again.",
+        variant: "destructive",
+      });
+    }
+    setUploadingImage(false);
+  };
+
+  const handleProfileImageClick = () => {
+    profileInputRef.current?.click();
+  };
+
+  // Trigger file input for portfolio image
+  const handlePortfolioImageClick = () => {
+    if (profile.portfolio.length >= 5) {
+      toast({
+        title: "Limit Reached",
+        description: "You can upload a maximum of 5 portfolio images.",
+        variant: "destructive",
+      });
+      return;
+    }
+    portfolioInputRef.current?.click();
+  };
+
+  // Handle portfolio file input change
+  const handlePortfolioImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      uploadPortfolioImageToCloudinary(e.target.files[0]);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-glamour-light">
-      <Navigation />
-      
-      <main className="container mx-auto px-4 py-20">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            {/* Profile Image Upload */}
-            <div className="mb-8 text-center">
-              <div className="relative inline-block">
-                <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
-                  {imagePreview ? (
-                    <AvatarImage src={imagePreview} />
-                  ) : (
-                    <AvatarFallback>SA</AvatarFallback>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Artist Profile</h1>
+          <Button
+            onClick={() => (isEditing ? handleSaveProfile() : setIsEditing(true))}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg"
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader className="mr-2 h-4 w-4 animate-spin" />
+            ) : isEditing ? (
+              <Save className="mr-2 h-4 w-4" />
+            ) : (
+              "Edit Profile"
+            )}
+          </Button>
+        </div>
+
+        {loading ? (
+          <p className="text-center text-gray-500">Loading profile...</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Profile Picture Section */}
+              <div className="space-y-4">
+                <Label>Profile Picture</Label>
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={profile.profilePicture || ""} />
+                    <AvatarFallback>{profile.name ? profile.name[0] : "A"}</AvatarFallback>
+                  </Avatar>
+                  {isEditing && (
+                    <div>
+                      <input
+                        type="file"
+                        ref={profileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            uploadImageToCloudinary(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={handleProfileImageClick}
+                        disabled={uploadingImage}
+                      >
+                        {uploadingImage ? (
+                          <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <ImagePlus className="mr-2 h-4 w-4" />
+                        )}
+                        {uploadingImage ? "Uploading..." : "Upload"}
+                      </Button>
+                    </div>
                   )}
-                </Avatar>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  id="profileImageUpload"
-                  onChange={handleImageChange}
-                />
-                <label htmlFor="profileImageUpload">
-                  <Button size="icon" className="absolute bottom-0 right-0 rounded-full bg-gradient-glamour hover:opacity-90">
-                    <Camera className="h-4 w-4" />
-                  </Button>
-                </label>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label>Name</Label>
+                {isEditing ? (
+                  <Input
+                    value={profile.name}
+                    onChange={(e) =>
+                      setProfile({ ...profile, name: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-lg font-medium">{profile.name}</p>
+                )}
+
+                <Label>Experience</Label>
+                {isEditing ? (
+                  <Textarea
+                    value={profile.experience}
+                    onChange={(e) =>
+                      setProfile({ ...profile, experience: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-gray-600">{profile.experience}</p>
+                )}
+
+                <Label>Specialties</Label>
+                {isEditing ? (
+                  <Input
+                    value={profile.specialties}
+                    onChange={(e) =>
+                      setProfile({ ...profile, specialties: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-gray-600">{profile.specialties}</p>
+                )}
+
+                <Label>Phone</Label>
+                {isEditing ? (
+                  <Input
+                    value={profile.phone}
+                    onChange={(e) =>
+                      setProfile({ ...profile, phone: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-gray-600">{profile.phone}</p>
+                )}
+
+                <Label>Email</Label>
+                <p className="text-gray-600">{profile.email}</p>
               </div>
             </div>
 
-            {/* Profile Form */}
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField control={form.control} name="name" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl><Input {...field} className="border-glamour-gold/20" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <FormField control={form.control} name="bio" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl><Textarea {...field} className="border-glamour-gold/20" /></FormControl>
-                    <FormDescription>Tell clients about yourself and your expertise</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <Button type="submit" className="w-full bg-gradient-glamour hover:opacity-90" disabled={loading}>
-                  {loading ? "Saving..." : <><Save className="w-4 h-4 mr-2" /> Save Changes</>}
-                </Button>
-              </form>
-            </Form>
-          </div>
-
-          {/* Services */}
-          <Card className="mb-8">
-            <CardHeader>
-              <h2 className="font-serif text-2xl text-glamour-dark">Services</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {[
-                  { name: "Bridal Makeup", price: "$300", duration: "2 hours" },
-                  { name: "Editorial Makeup", price: "$200", duration: "1.5 hours" },
-                  { name: "Special Event", price: "$150", duration: "1 hour" },
-                ].map((service) => (
-                  <div
-                    key={service.name}
-                    className="flex justify-between items-center p-4 rounded-lg border border-glamour-gold/20 hover:border-glamour-gold/40 transition-colors"
-                  >
-                    <div>
-                      <h3 className="font-medium text-glamour-dark">{service.name}</h3>
-                      <p className="text-sm text-glamour-dark/60">{service.duration}</p>
+            <div className="mt-8">
+              <Label>Portfolio</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                {profile.portfolio &&
+                  profile.portfolio.map((img, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={img}
+                        alt={`Portfolio ${index + 1}`}
+                        className="object-cover h-32 w-full rounded"
+                      />
                     </div>
-                    <div className="text-right">
-                      <div className="font-serif text-xl text-glamour-dark">
-                        {service.price}
-                      </div>
-                      <Button variant="outline" size="sm">Book Now</Button>
-                    </div>
+                  ))}
+                {isEditing && profile.portfolio.length < 5 && (
+                  <div className="flex items-center justify-center border border-dashed rounded h-32 w-full">
+                    <input
+                      type="file"
+                      ref={portfolioInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handlePortfolioImageChange}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={handlePortfolioImageClick}
+                      disabled={uploadingImage}
+                    >
+                      {uploadingImage ? (
+                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                      )}
+                      {uploadingImage ? "Uploading..." : "Upload"}
+                    </Button>
                   </div>
-                ))}
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-
-      <Footer />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
 
-export default ArtistProfileEdit;
+export default ArtistProfile;

@@ -7,7 +7,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SearchArtists from "./pages/SearchArtists";
 import ArtistProfile from "./pages/ArtistProfile";
-import Booking from "./pages/Booking";
 import Masterclasses from "./pages/Masterclasses";
 import CreateMasterclass from "./pages/CreateMasterclass";
 import CustomerDashboard from "./pages/CustomerDashboard";
@@ -32,8 +31,9 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/search" element={<SearchArtists />} />
           <Route path="/CustomerDashboard" element={<CustomerDashboard />} />
-          <Route path="/artist-profile/:artistId" element={<ArtistProfile />} />
-          <Route path="/booking/:artistId" element={<Booking />} />
+          {/* <Route path="/artist-profile/:artistId" element={<ArtistProfile />} /> */}
+          <Route path="/artist-profile" element={<ArtistProfile />}  ></Route>
+          {/* <Route path="/booking/:artistId" element={<Booking />} /> */}
           <Route path="/UpdateSchedule" element={<UpdateSchedule />} />
           <Route path="/masterclasses" element={<Masterclasses />} />
           <Route path="/masterclasses/:id" element={<MasterclassDetails />} />

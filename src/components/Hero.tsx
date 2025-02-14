@@ -1,6 +1,8 @@
 import { Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
   return (
     <div className="relative min-h-screen flex items-center bg-glamour-light">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158')] bg-cover bg-center opacity-10" />
@@ -17,10 +19,12 @@ const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="bg-gradient-glamour text-white px-8 py-4 rounded-full font-sans hover:opacity-90 transition-opacity animate-shimmer">
+            <button className="bg-gradient-glamour text-white px-8 py-4 rounded-full font-sans hover:opacity-90 transition-opacity animate-shimmer"
+            onClick={() => navigate("/signup/customer")} >
               Book an Artist
             </button>
-            <button className="border-2 border-glamour-gold text-glamour-dark px-8 py-4 rounded-full font-sans hover:bg-glamour-gold/10 transition-colors">
+            <button className="border-2 border-glamour-gold text-glamour-dark px-8 py-4 rounded-full font-sans hover:bg-glamour-gold/10 transition-colors"
+            onClick={() => navigate("/signup/artist")}>
               Join as an Artist
             </button>
           </div>

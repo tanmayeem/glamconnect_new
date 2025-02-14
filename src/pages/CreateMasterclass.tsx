@@ -99,7 +99,7 @@ const CreateMasterclass = () => {
   const uploadImageToCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "profolio");
+    formData.append("upload_preset", "masterclass");
     formData.append("cloud_name", "dznft1m2s");
 
     try {

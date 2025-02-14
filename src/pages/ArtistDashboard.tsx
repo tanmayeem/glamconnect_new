@@ -62,9 +62,9 @@ const ArtistDashboard = () => {
                 Your artistry makes a difference
               </p>
             </div>
-            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg">
+            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg" onClick={() => navigate("/UpdateSchedule")}>
               <Calendar className="mr-2 h-4 w-4" />
-              Update Schedule
+              Update Availability
             </Button>
           </div>
 
@@ -269,16 +269,9 @@ const ArtistDashboard = () => {
       {/* Quick Links Section */}
       <div className="container mx-auto px-4 pt-24">
         <div className="flex gap-4 mb-8">
+       
           <Button
-            onClick={() => setActiveSection('dashboard')}
-            variant={activeSection === 'dashboard' ? 'default' : 'outline'}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg"
-          >
-            <Calendar className="mr-2 h-4 w-4" />
-            Update Schedule
-          </Button>
-          <Button
-            onClick={() => setActiveSection('profile')}
+            onClick={() => navigate('/artist-profile')}
             variant={activeSection === 'profile' ? 'default' : 'outline'}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg"
           >
@@ -297,7 +290,7 @@ const ArtistDashboard = () => {
 
       <main className="container mx-auto px-4 pb-12">
         <div className="max-w-7xl mx-auto">
-          {activeSection === 'dashboard' ? renderDashboardContent(): renderProfileContent()}
+          {activeSection === 'dashboard' && renderDashboardContent()}
         </div>
       </main>
 

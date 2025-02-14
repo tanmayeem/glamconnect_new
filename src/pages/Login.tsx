@@ -26,7 +26,6 @@ const Login = () => {
       const user = userCredential.user;
       const uid = user.uid;
 
-      // Check if the user is an artist
       const artistDocRef = doc(db, "artists", uid);
       const artistDoc = await getDoc(artistDocRef);
 
@@ -39,7 +38,6 @@ const Login = () => {
         return;
       }
 
-      // Check if the user is a customer
       const customerDocRef = doc(db, "customers", uid);
       const customerDoc = await getDoc(customerDocRef);
 
@@ -52,7 +50,6 @@ const Login = () => {
         return;
       }
 
-      // Default redirect if role isn't found
       toast({
         title: "Login Successful",
         description: "Redirecting to default dashboard.",
@@ -158,6 +155,16 @@ const Login = () => {
             </p>
             <p className="text-sm text-glamour-dark/60">
               Are you an artist?{" "}
+              <Link
+                to="/signup/artist"
+                className="text-pink-600 hover:text-pink-700 font-medium"
+              >
+                Sign up as Artist
+              </Link>
+            </p>
+
+            <p className="text-sm text-glamour-dark/60">
+              Password dont remeber , Dont worry?{" "}
               <Link
                 to="/signup/artist"
                 className="text-pink-600 hover:text-pink-700 font-medium"
