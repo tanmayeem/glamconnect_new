@@ -1,8 +1,9 @@
-import { Toaster } from "@/components/ui/toaster";
+import { useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Navigation from "./components/Navigation"; 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SearchArtists from "./pages/SearchArtists";
@@ -20,40 +21,59 @@ import UpdateSchedule from "./components/UpdateSchedule";
 import MasterclassDetails from "./components/MasterclassDetails";
 import CustomerProfile from "./pages/CustomerProfile";
 
+// Initialize Query Client
 const queryClient = new QueryClient();
+
+// Simple Error Boundary Component
+const ErrorBoundary = ({ children }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return (
+      <h1 className="text-center text-glamour-red mt-10">
+        Something went wrong. Please try again later.
+      </h1>
+    );
+  }
+
+  return children;
+};
 
 const App = () => (
   <AuthProvider>
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/CustomerProfile" element={<CustomerProfile />} />
-          <Route path="/search" element={<SearchArtists />} />
-          <Route path="/CustomerDashboard" element={<CustomerDashboard />} />
-          {/* <Route path="/artist-profile/:artistId" element={<ArtistProfile />} /> */}
-          <Route path="/artist-profile" element={<ArtistProfile />}  ></Route>
-          {/* <Route path="/booking/" element={<Booking />} /> */}
-          <Route path="/booking/:artistId" element={<Booking />} />
-          <Route path="/UpdateSchedule" element={<UpdateSchedule />} />
-          <Route path="/masterclasses" element={<Masterclasses />} />
-          <Route path="/masterclasses/:id" element={<MasterclassDetails />} />
-          <Route path="/create-masterclass" element={<CreateMasterclass />} />
-          <Route path="/dashboard" element={<ArtistDashboard />} />
-          <Route path="/masterclasses/create" element={<CreateMasterclass />} />
-          <Route path="/dashboard/customer" element={<CustomerDashboard />} />
-          <Route path="/dashboard/artist" element={<ArtistDashboard />} />
-          <Route path="/signup/customer" element={<CustomerSignup />} />
-          <Route path="/signup/artist" element={<ArtistSignup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <div className="min-h-screen bg-glamour-light text-glamour-dark">
+          <BrowserRouter>
+            {/* Global Navigation */}
+            <Navigation />
+
+            {/* Main Content with Error Boundary */}
+            <ErrorBoundary>
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/customer-profile" element={<CustomerProfile />} />
+                <Route path="/search" element={<SearchArtists />} />
+                <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+                <Route path="/artist-profile/:artistId" element={<ArtistProfile />} />
+                <Route path="/booking/:artistId" element={<Booking />} />
+                <Route path="/update-schedule" element={<UpdateSchedule />} />
+                <Route path="/masterclasses" element={<Masterclasses />} />
+                <Route path="/masterclasses/:id" element={<MasterclassDetails />} />
+                <Route path="/create-masterclass" element={<CreateMasterclass />} />
+                <Route path="/dashboard/artist" element={<ArtistDashboard />} />
+                <Route path="/dashboard/customer" element={<CustomerDashboard />} />
+                <Route path="/signup/customer" element={<CustomerSignup />} />
+                <Route path="/signup/artist" element={<ArtistSignup />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ErrorBoundary>
+          </BrowserRouter>
+        </div>
+      </TooltipProvider>
+    </QueryClientProvider>
   </AuthProvider>
 );
 

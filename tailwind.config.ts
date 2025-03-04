@@ -29,6 +29,7 @@ export default {
           gold: "#E6B980",
           light: "#FEF9F9",
           dark: "#2D1D1E",
+          red: "#A31D1D",
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -70,13 +71,13 @@ export default {
         },
       },
       animation: {
-        shimmer: "shimmer 8s linear infinite",
+        shimmer: "shimmer 3s linear infinite", // Faster for a bolder effect
       },
       backgroundImage: {
         "gradient-glamour":
-          "linear-gradient(135deg, #D946EF 0%, #E6B980 100%)",
+          "linear-gradient(135deg, #A31D1D 0%, #E6B980 100%)", // Red to Gold
       },
     },
   },
-  // plugins: [import("tailwindcss-animate")],
+  // plugins: [require("tailwindcss-animate")], // Uncommented for animations
 } satisfies Config;

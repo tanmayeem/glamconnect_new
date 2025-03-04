@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Mail, Lock } from "lucide-react";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore"; 
-import { auth, db } from "../../firebaseconfig";  
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../firebaseconfig";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -118,28 +118,30 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-glamour-light to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="font-serif text-3xl text-glamour-dark mb-2">
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-glamour-gold/20">
+          <div className="text-center mb-10">
+            <h1 className="font-serif text-4xl text-glamour-dark mb-3 drop-shadow-md">
               Welcome Back
             </h1>
-            <p className="text-glamour-dark/60">
-              Sign in to continue your beauty journey
+            <p className="font-sans text-lg text-glamour-dark/70">
+              Sign in to unlock your beauty experience
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-glamour-dark">
+                Email
+              </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-glamour-dark/40" />
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-glamour-gold/60" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter your email"
-                  className="pl-10"
+                  className="pl-10 pr-4 py-2 border-glamour-gold/30 focus:border-glamour-gold focus:ring-glamour-gold"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -147,15 +149,17 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="space-y-3">
+              <Label htmlFor="password" className="text-glamour-dark">
+                Password
+              </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-glamour-dark/40" />
+                <Lock className="absolute left-3 top-3 h-5 w-5 text-glamour-gold/60" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="Enter your password"
-                  className="pl-10"
+                  className="pl-10 pr-4 py-2 border-glamour-gold/30 focus:border-glamour-gold focus:ring-glamour-gold"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -166,55 +170,42 @@ const Login = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white"
+              className="w-full bg-gradient-glamour text-white hover:opacity-90 transition-all py-3 rounded-xl shadow-md"
             >
               {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
 
-          {/* <div className="mt-4 text-right">
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              disabled={resetLoading}
-              className="text-sm text-pink-600 hover:text-pink-700"
-            >
-              {resetLoading ? "Sending..." : "Forgot Password?"}
-            </button>
-          </div> */}
-
           <div className="mt-6 text-center space-y-4">
-            <p className="text-sm text-glamour-dark/60">
+            <p className="text-sm text-glamour-dark/70">
               Don't have an account?{" "}
               <Link
                 to="/signup/customer"
-                className="text-pink-600 hover:text-pink-700 font-medium"
+                className="text-glamour-gold hover:text-glamour-red font-medium"
               >
                 Sign up as Customer
               </Link>
             </p>
-            <p className="text-sm text-glamour-dark/60">
+            <p className="text-sm text-glamour-dark/70">
               Are you an artist?{" "}
               <Link
                 to="/signup/artist"
-                className="text-pink-600 hover:text-pink-700 font-medium"
+                className="text-glamour-gold hover:text-glamour-red font-medium"
               >
                 Sign up as Artist
               </Link>
             </p>
-
-            <p className="text-sm text-glamour-dark/60">
-            Dont Worry! 
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              disabled={resetLoading}
-              className="text-sm text-pink-600 hover:text-pink-700"
-            >
-              {resetLoading ? "Sending..." : " Forgot Password?"}
-            </button>
+            <p className="text-sm text-glamour-dark/70">
+              Forgot your password?{" "}
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                className="text-glamour-gold hover:text-glamour-red font-medium"
+              >
+                {resetLoading ? "Sending..." : "Reset Password"}
+              </button>
             </p>
-
           </div>
         </div>
       </div>
@@ -222,4 +213,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Login; 

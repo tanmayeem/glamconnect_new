@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "../context/Authcontext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseconfig"; // Ensure Firestore is properly imported
+import { Button } from "@/components/ui/button"; // Ensure Button component is imported
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +13,7 @@ const Navigation = () => {
   const [userType, setUserType] = useState<"artist" | "customer" | null>(null);
   const navigate = useNavigate();
 
-  // 🔥 Fetch user type from Firestore
+  // Fetch user type from Firestore
   useEffect(() => {
     if (currentUser) {
       const fetchUserType = async () => {
@@ -40,11 +41,11 @@ const Navigation = () => {
     }
   }, [currentUser]);
 
-  // 🔥 Handle Logout
+  // Handle Logout
   const handleLogout = async () => {
     try {
       await logout();
-      navigate("/");  
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -52,95 +53,164 @@ const Navigation = () => {
 
   const homeRedirect = currentUser
     ? userType === "artist"
-      ? "/dashboard"
+      ? "/dashboard/artist"
       : userType === "customer"
-      ? "/CustomerDashboard"
+      ? "/dashboard/customer"
       : "/"
     : "/";
 
   return (
-    <nav className="fixed w-full bg-white/90 backdrop-blur-md z-50 border-b border-glamour-gold/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex-shrink-0 flex items-center">
-            <Link to={homeRedirect} className="font-serif text-2xl text-glamour-dark">
-              GlamConnect
-            </Link>
-          </div>
+    <nav className="fixed w-full bg-glamour-light/80 backdrop-blur-md z-50 shadow-lg border-b border-glamour-gold/20">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-20">
+          <Link
+            to={homeRedirect}
+            className="font-serif text-3xl font-bold bg-gradient-to-r from-glamour-red to-glamour-gold bg-clip-text text-transparent transition-all hover:brightness-110"
+          >
+            GlamConnect
+          </Link>
 
-          <div className="hidden md:flex items-center space-x-8">
-            <Link to={homeRedirect} className="font-sans text-glamour-dark hover:text-glamour-pink transition-colors">
-              Home
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link
+              to="/search"
+              className="text-glamour-dark hover:text-glamour-gold transition-colors font-sans text-lg"
+            >
+              Find Artists
             </Link>
-            <Link to="/search" className="font-sans text-glamour-dark hover:text-glamour-pink transition-colors">
-              Book Artists
-            </Link>
-            <Link to="/masterclasses" className="font-sans text-glamour-dark hover:text-glamour-pink transition-colors">
+            <Link
+              to="/masterclasses"
+              className="text-glamour-dark hover:text-glamour-gold transition-colors font-sans text-lg"
+            >
               Masterclasses
             </Link>
+            <Link
+              to="/about"
+              className="text-glamour-dark hover:text-glamour-gold transition-colors font-sans text-lg"
+            >
+              About
+            </Link>
 
+            {/* Auth Buttons */}
             {currentUser ? (
-              <div className="flex items-center gap-4">
-                <Link to={`/artist/${currentUser.uid}`} className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8">
-                    {currentUser.photoURL ? (
-                      <AvatarImage src={currentUser.photoURL} alt="User Avatar" />
-                    ) : (
-                      <AvatarFallback className="bg-glamour-pink/10 text-glamour-pink">
-                        <User size={18} />
+              <div className="flex items-center space-x-4">
+                <Avatar className="w-10 h-10 border-2 border-glamour-gold hover:border-glamour-red transition-colors">
+                  <AvatarImage
+                    src={currentUser.photoURL || ""}
+                    alt={currentUser.displayName || "User"}
+                  />
+                  <AvatarFallback>
+                    <User className="w-6 h-6 text-glamour-dark" />
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  onClick={handleLogout}
+                  className="bg-glamour-red text-white hover:bg-glamour-gold transition-all px-6 py-2 rounded-full shadow-md"
+                >
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Link to="/signup/artist">
+                  <Button className="bg-glamour-gold/20 text-glamour-dark hover:bg-glamour-gold hover:text-white transition-all px-6 py-2 rounded-full shadow-md">
+                    Register as Artist
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button
+                    className="bg-gradient-glamour text-white hover:opacity-90 transition-all px-6 py-2 rounded-full shadow-md"
+                    onClick={() =>
+                      navigate("/login", { state: { preselectedRole: "artist" } })
+                    }
+                  >
+                    Login as Artist
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-glamour-dark hover:text-glamour-gold transition-colors"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <div className="md:hidden py-6 bg-white/95 backdrop-blur-md rounded-lg shadow-lg">
+            <div className="flex flex-col space-y-4">
+              <Link
+                to="/search"
+                className="text-glamour-dark hover:text-glamour-gold transition-colors font-sans text-lg px-4 py-2"
+                onClick={() => setIsOpen(false)}
+              >
+                Find Artists
+              </Link>
+              <Link
+                to="/masterclasses"
+                className="text-glamour-dark hover:text-glamour-gold transition-colors font-sans text-lg px-4 py-2"
+                onClick={() => setIsOpen(false)}
+              >
+                Masterclasses
+              </Link>
+              <Link
+                to="/about"
+                className="text-glamour-dark hover:text-glamour-gold transition-colors font-sans text-lg px-4 py-2"
+                onClick={() => setIsOpen(false)}
+              >
+                About
+              </Link>
+
+              {currentUser ? (
+                <div className="px-4">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Avatar className="w-10 h-10 border-2 border-glamour-gold">
+                      <AvatarImage
+                        src={currentUser.photoURL || ""}
+                        alt={currentUser.displayName || "User"}
+                      />
+                      <AvatarFallback>
+                        <User className="w-6 h-6 text-glamour-dark" />
                       </AvatarFallback>
-                    )}
-                  </Avatar>
-                </Link>
-                <button onClick={handleLogout} className="font-sans text-glamour-dark hover:text-glamour-pink">
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <Link to="/login" className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white px-6 py-2 rounded-full font-sans transition-all duration-300">
-                Sign In
-              </Link>
-            )}
+                    </Avatar>
+                  </div>
+                  <Button
+                    onClick={handleLogout}
+                    className="bg-glamour-red text-white hover:bg-glamour-gold w-full transition-all px-6 py-2 rounded-full shadow-md"
+                  >
+                    Logout
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Link to="/signup/artist">
+                    <Button className="bg-glamour-gold/20 text-glamour-dark hover:bg-glamour-gold hover:text-white w-full transition-all px-6 py-2 rounded-full shadow-md">
+                      Register as Artist
+                    </Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button
+                      className="bg-gradient-glamour text-white hover:opacity-90 w-full transition-all px-6 py-2 rounded-full shadow-md"
+                      onClick={() =>
+                        navigate("/login", {
+                          state: { preselectedRole: "artist" },
+                        })
+                      }
+                    >
+                      Login as Artist
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
-
-          <div className="md:hidden flex items-center">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-glamour-dark hover:text-glamour-pink">
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </div>
+        )}
       </div>
-
-      {isOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white">
-            <Link to={homeRedirect} className="block px-3 py-2 text-glamour-dark hover:text-glamour-pink font-sans">
-              Home
-            </Link>
-            <Link to="/search" className="block px-3 py-2 text-glamour-dark hover:text-glamour-pink font-sans">
-              Book Artists
-            </Link>
-            <Link to="/masterclasses" className="block px-3 py-2 text-glamour-dark hover:text-glamour-pink font-sans">
-              Masterclasses
-            </Link>
-
-            {currentUser ? (
-              <div className="mt-4 space-y-2">
-                <Link to={`/artist/${currentUser.uid}`} className="block px-3 py-2 text-glamour-dark hover:text-glamour-pink font-sans">
-                  Profile
-                </Link>
-                <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-glamour-dark hover:text-glamour-pink font-sans">
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <Link to="/login" className="block w-full mt-4 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white px-6 py-2 rounded-full font-sans text-center">
-                Sign In
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
     </nav>
   );
 };
