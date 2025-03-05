@@ -9,8 +9,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ImagePlus, Save, Loader } from "lucide-react";
-import Navigation from "@/components/Navigation";
+import { ImagePlus, Save, Loader, X, Instagram, Facebook, Globe } from "lucide-react";
+
+interface Profile {
+  name: string;
+  experience: string;
+  specialties: string;
+  phone: string;
+  email: string;
+  profilePicture: string;
+  uid: string;
+  portfolio: string[];
+  instagram: string;
+  facebook: string;
+  website: string;
+}
 
 const ArtistProfile = () => {
   const { currentUser } = useAuth();
@@ -20,7 +33,7 @@ const ArtistProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<Profile>({
     name: "",
     experience: "",
     specialties: "",
@@ -28,7 +41,10 @@ const ArtistProfile = () => {
     email: "",
     profilePicture: "",
     uid: "",
-    portfolio: [] as string[],
+    portfolio: [],
+    instagram: "",
+    facebook: "",
+    website: "",
   });
 
   const profileInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +68,9 @@ const ArtistProfile = () => {
             profilePicture: data.profilePicture || "",
             uid: data.uid || "",
             portfolio: data.portfolio || [],
+            instagram: data.instagram || "",
+            facebook: data.facebook || "",
+            website: data.website || "",
           });
         } else {
           console.log("No artist profile found.");
@@ -75,13 +94,17 @@ const ArtistProfile = () => {
         experience: profile.experience,
         specialties: profile.specialties,
         phone: profile.phone,
+        email: profile.email,
         profilePicture: profile.profilePicture,
-        // Note: Portfolio images are updated separately
+        instagram: profile.instagram,
+        facebook: profile.facebook,
+        website: profile.website,
       });
 
       toast({
         title: "Profile Updated!",
         description: "Your changes have been saved successfully.",
+        className: "bg-glamour-gold/20 text-glamour-dark",
       });
 
       setIsEditing(false);
@@ -96,12 +119,38 @@ const ArtistProfile = () => {
     setLoading(false);
   };
 
-  // Upload profile image to Cloudinary and update Firestore
-  const uploadImageToCloudinary = async (file: File) => {
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    const fetchProfile = async () => {
+      if (currentUser) {
+        const artistDoc = doc(db, "artists", currentUser.uid);
+        const snapshot = await getDoc(artistDoc);
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          setProfile({
+            name: data.name || "",
+            experience: data.experience || "",
+            specialties: data.specialties || "",
+            phone: data.phone || "",
+            email: data.email || "",
+            profilePicture: data.profilePicture || "",
+            uid: data.uid || "",
+            portfolio: data.portfolio || [],
+            instagram: data.instagram || "",
+            facebook: data.facebook || "",
+            website: data.website || "",
+          });
+        }
+      }
+    };
+    fetchProfile();
+  };
+
+  const uploadImageToCloudinary = async (file: File, type: "profile" | "portfolio") => {
     setUploadingImage(true);
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "Display_picture");
+    formData.append("upload_preset", type === "profile" ? "Display_picture" : "portfolio");
     formData.append("cloud_name", "dznft1m2s");
 
     try {
@@ -114,14 +163,29 @@ const ArtistProfile = () => {
 
       if (currentUser) {
         const artistDoc = doc(db, "artists", currentUser.uid);
-        await updateDoc(artistDoc, { profilePicture: data.secure_url });
+        if (type === "profile") {
+          await updateDoc(artistDoc, { profilePicture: data.secure_url });
+          setProfile((prev) => ({ ...prev, profilePicture: data.secure_url }));
+        } else {
+          const updatedPortfolio = [...profile.portfolio, data.secure_url];
+          if (updatedPortfolio.length > 5) {
+            toast({
+              title: "Upload Failed",
+              description: "You can upload up to 5 images only.",
+              variant: "destructive",
+            });
+            setUploadingImage(false);
+            return;
+          }
+          await updateDoc(artistDoc, { portfolio: updatedPortfolio });
+          setProfile((prev) => ({ ...prev, portfolio: updatedPortfolio }));
+        }
       }
 
-      setProfile((prev) => ({ ...prev, profilePicture: data.secure_url }));
-
       toast({
-        title: "Profile Picture Updated!",
-        description: "Your new profile picture has been saved.",
+        title: type === "profile" ? "Profile Picture Updated!" : "Portfolio Image Uploaded!",
+        description: `Your ${type === "profile" ? "profile picture" : "portfolio image"} has been saved.`,
+        className: "bg-glamour-gold/20 text-glamour-dark",
       });
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -134,62 +198,10 @@ const ArtistProfile = () => {
     setUploadingImage(false);
   };
 
-  const uploadPortfolioImageToCloudinary = async (file: File) => {
-    setUploadingImage(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "portfolio");
-    formData.append("cloud_name", "dznft1m2s");
-
-    try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/dznft1m2s/image/upload`,
-        { method: "POST", body: formData }
-      );
-      const data = await response.json();
-      if (!data.secure_url) throw new Error("Upload failed");
-
-      const updatedPortfolio = profile.portfolio
-        ? [...profile.portfolio, data.secure_url]
-        : [data.secure_url];
-
-      if (updatedPortfolio.length > 5) {
-        toast({
-          title: "Upload Failed",
-          description: "You can upload up to 5 images only.",
-          variant: "destructive",
-        });
-        setUploadingImage(false);
-        return;
-      }
-
-      if (currentUser) {
-        const artistDoc = doc(db, "artists", currentUser.uid);
-        await updateDoc(artistDoc, { portfolio: updatedPortfolio });
-      }
-
-      setProfile((prev) => ({ ...prev, portfolio: updatedPortfolio }));
-
-      toast({
-        title: "Portfolio Image Uploaded!",
-        description: "Your portfolio image has been saved.",
-      });
-    } catch (error) {
-      console.error("Error uploading portfolio image:", error);
-      toast({
-        title: "Upload Failed",
-        description: "There was an error uploading your portfolio image. Try again.",
-        variant: "destructive",
-      });
-    }
-    setUploadingImage(false);
-  };
-
   const handleProfileImageClick = () => {
     profileInputRef.current?.click();
   };
 
-  // Trigger file input for portfolio image
   const handlePortfolioImageClick = () => {
     if (profile.portfolio.length >= 5) {
       toast({
@@ -202,48 +214,58 @@ const ArtistProfile = () => {
     portfolioInputRef.current?.click();
   };
 
-  // Handle portfolio file input change
   const handlePortfolioImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      uploadPortfolioImageToCloudinary(e.target.files[0]);
+      uploadImageToCloudinary(e.target.files[0], "portfolio");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Artist Profile</h1>
-          <Button
-            onClick={() => (isEditing ? handleSaveProfile() : setIsEditing(true))}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-lg"
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader className="mr-2 h-4 w-4 animate-spin" />
-            ) : isEditing ? (
-              <Save className="mr-2 h-4 w-4" />
-            ) : (
-              "Edit Profile"
-            )}
-          </Button>
-        </div>
-
-        {loading ? (
-          <p className="text-center text-gray-500">Loading profile...</p>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Profile Picture Section */}
-              <div className="space-y-4">
-                <Label>Profile Picture</Label>
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={profile.profilePicture || ""} />
-                    <AvatarFallback>{profile.name ? profile.name[0] : "A"}</AvatarFallback>
+    <div className="min-h-screen bg-glamour-light p-6 md:p-12">
+      <div className="max-w-4xl mx-auto p-7">
+        <div className="bg-white rounded-2xl p-20 md:p-8 border border-glamour-gold/20 shadow-lg hover:shadow-xl transition-shadow">
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="space-y-4 flex-shrink-0 p-10">
+              {loading ? (
+                <p className="text-center text-glamour-dark/70">Loading profile...</p>
+              ) : (
+                <div>
+                  <div className="flex justify-end space-x-2 mb-7">
+                    {isEditing && (
+                      <Button
+                        onClick={handleCancelEdit}
+                        variant="outline"
+                        className="bg-glamour-light hover:bg-glamour-gold/20 text-glamour-dark border-glamour-gold/40 rounded-lg"
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Cancel
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => (isEditing ? handleSaveProfile() : setIsEditing(true))}
+                      className="bg-gradient-glamour text-white hover:opacity-90 shadow-md rounded-lg px-4 py-2 transition-all"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                      ) : isEditing ? (
+                        <Save className="mr-2 h-4 w-4" />
+                      ) : (
+                        "Edit Profile"
+                      )}
+                    </Button>
+                  </div>
+                  <Avatar className="w-30 h-30 md:w-32 md:h-32 border-10 border-glamour-gold/40 hover:border-glamour-red transition-colors">
+                    <AvatarImage
+                      src={profile.profilePicture || "https://via.placeholder.com/150"}
+                      alt={profile.name}
+                    />
+                    <AvatarFallback className="bg-glamour-gold/20 text-glamour-dark">
+                      {profile.name ? profile.name[0] : "A"}
+                    </AvatarFallback>
                   </Avatar>
                   {isEditing && (
-                    <div>
+                    <div className="mt-4 p-5">
                       <input
                         type="file"
                         ref={profileInputRef}
@@ -251,7 +273,7 @@ const ArtistProfile = () => {
                         accept="image/*"
                         onChange={(e) => {
                           if (e.target.files?.[0]) {
-                            uploadImageToCloudinary(e.target.files[0]);
+                            uploadImageToCloudinary(e.target.files[0], "profile");
                           }
                         }}
                       />
@@ -259,113 +281,194 @@ const ArtistProfile = () => {
                         variant="outline"
                         onClick={handleProfileImageClick}
                         disabled={uploadingImage}
+                        className="bg-glamour-light hover:bg-glamour-gold/20 text-glamour-dark border-glamour-gold/40 w-full mt-2"
                       >
                         {uploadingImage ? (
                           <Loader className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
                           <ImagePlus className="mr-2 h-4 w-4" />
                         )}
-                        {uploadingImage ? "Uploading..." : "Upload"}
+                        {uploadingImage ? "Uploading..." : "Change Photo"}
                       </Button>
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <Label>Name</Label>
+              )}
+            </div>
+            <div className="space-y-4 w-full">
+              <div>
+                <Label className="font-serif text-glamour-dark">Name</Label>
                 {isEditing ? (
                   <Input
                     value={profile.name}
-                    onChange={(e) =>
-                      setProfile({ ...profile, name: e.target.value })
-                    }
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold w-full"
                   />
                 ) : (
-                  <p className="text-lg font-medium">{profile.name}</p>
+                  <p className="text-xl font-medium text-glamour-dark">{profile.name}</p>
                 )}
-
-                <Label>Experience</Label>
+              </div>
+              <div>
+                <Label className="font-serif text-glamour-dark">Experience</Label>
                 {isEditing ? (
                   <Textarea
                     value={profile.experience}
-                    onChange={(e) =>
-                      setProfile({ ...profile, experience: e.target.value })
-                    }
+                    onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold min-h-[100px] w-full"
                   />
                 ) : (
-                  <p className="text-gray-600">{profile.experience}</p>
+                  <p className="text-sm text-glamour-dark/70">{profile.experience}</p>
                 )}
-
-                <Label>Specialties</Label>
+              </div>
+              <div>
+                <Label className="font-serif text-glamour-dark">Specialties</Label>
                 {isEditing ? (
                   <Input
                     value={profile.specialties}
-                    onChange={(e) =>
-                      setProfile({ ...profile, specialties: e.target.value })
-                    }
+                    onChange={(e) => setProfile({ ...profile, specialties: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold w-full"
                   />
                 ) : (
-                  <p className="text-gray-600">{profile.specialties}</p>
+                  <p className="text-sm text-glamour-dark/70">{profile.specialties}</p>
                 )}
-
-                <Label>Phone</Label>
+              </div>
+              <div>
+                <Label className="font-serif text-glamour-dark">Phone</Label>
                 {isEditing ? (
                   <Input
                     value={profile.phone}
-                    onChange={(e) =>
-                      setProfile({ ...profile, phone: e.target.value })
-                    }
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold w-full"
                   />
                 ) : (
-                  <p className="text-gray-600">{profile.phone}</p>
-                )}
-
-                <Label>Email</Label>
-                <p className="text-gray-600">{profile.email}</p>
-              </div>
-            </div>
-
-            <div className="mt-8">
-              <Label>Portfolio</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                {profile.portfolio &&
-                  profile.portfolio.map((img, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={img}
-                        alt={`Portfolio ${index + 1}`}
-                        className="object-cover h-32 w-full rounded"
-                      />
-                    </div>
-                  ))}
-                {isEditing && profile.portfolio.length < 5 && (
-                  <div className="flex items-center justify-center border border-dashed rounded h-32 w-full">
-                    <input
-                      type="file"
-                      ref={portfolioInputRef}
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handlePortfolioImageChange}
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={handlePortfolioImageClick}
-                      disabled={uploadingImage}
-                    >
-                      {uploadingImage ? (
-                        <Loader className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <ImagePlus className="mr-2 h-4 w-4" />
-                      )}
-                      {uploadingImage ? "Uploading..." : "Upload"}
-                    </Button>
-                  </div>
+                  <p className="text-sm text-glamour-dark/70">{profile.phone}</p>
                 )}
               </div>
+              <div>
+                <Label className="font-serif text-glamour-dark">Email</Label>
+                {isEditing ? (
+                  <Input
+                    value={profile.email}
+                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold w-full"
+                  />
+                ) : (
+                  <p className="text-sm text-glamour-dark/70">{profile.email}</p>
+                )}
+              </div>
+              <div>
+                <Label className="font-serif text-glamour-dark">Instagram</Label>
+                {isEditing ? (
+                  <Input
+                    value={profile.instagram}
+                    onChange={(e) => setProfile({ ...profile, instagram: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold w-full"
+                  />
+                ) : profile.instagram ? (
+                  <a
+                    href={profile.instagram.startsWith("http") ? profile.instagram : `https://${profile.instagram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-glamour-dark/70 hover:text-glamour-gold flex items-center"
+                  >
+                    <Instagram className="mr-2 h-4 w-4" />
+                    {profile.instagram}
+                  </a>
+                ) : (
+                  <p className="text-sm text-glamour-dark/70">Not provided</p>
+                )}
+              </div>
+              <div>
+                <Label className="font-serif text-glamour-dark">Facebook</Label>
+                {isEditing ? (
+                  <Input
+                    value={profile.facebook}
+                    onChange={(e) => setProfile({ ...profile, facebook: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold w-full"
+                  />
+                ) : profile.facebook ? (
+                  <a
+                    href={profile.facebook.startsWith("http") ? profile.facebook : `https://${profile.facebook}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-glamour-dark/70 hover:text-glamour-gold flex items-center"
+                  >
+                    <Facebook className="mr-2 h-4 w-4" />
+                    {profile.facebook}
+                  </a>
+                ) : (
+                  <p className="text-sm text-glamour-dark/70">Not provided</p>
+                )}
+              </div>
+              <div>
+                <Label className="font-serif text-glamour-dark">Website</Label>
+                {isEditing ? (
+                  <Input
+                    value={profile.website}
+                    onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold w-full"
+                  />
+                ) : profile.website ? (
+                  <a
+                    href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-glamour-dark/70 hover:text-glamour-gold flex items-center"
+                  >
+                    <Globe className="mr-2 h-4 w-4" />
+                    {profile.website}
+                  </a>
+                ) : (
+                  <p className="text-sm text-glamour-dark/70">Not provided</p>
+                )}
+              </div>
             </div>
-          </>
-        )}
+          </div>
+        </div>
+
+        {/* Portfolio Card */}
+        <div className="bg-white rounded-2xl p-6 md:p-8 border border-glamour-gold/20 shadow-lg hover:shadow-xl transition-shadow mt-8">
+          <div className="flex justify-between items-center mb-4">
+            <Label className="font-serif text-2xl text-glamour-dark">Portfolio</Label>
+            {isEditing && profile.portfolio.length < 5 && (
+              <Button
+                variant="outline"
+                onClick={handlePortfolioImageClick}
+                disabled={uploadingImage}
+                className="bg-glamour-light hover:bg-glamour-gold/20 text-glamour-dark border-glamour-gold/40 rounded-lg"
+              >
+                {uploadingImage ? (
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ImagePlus className="mr-2 h-4 w-4" />
+                )}
+                {uploadingImage ? "Uploading..." : "Add Image"}
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {profile.portfolio.map((img, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={img}
+                  alt={`Portfolio ${index + 1}`}
+                  className="object-cover h-48 w-full rounded-xl transition-transform duration-300 group-hover:scale-105 shadow-md border border-glamour-gold/20"
+                />
+              </div>
+            ))}
+            {isEditing && profile.portfolio.length < 5 && (
+              <div className="flex items-center justify-center border-2 border-dashed border-glamour-gold/40 rounded-xl h-48 w-full bg-glamour-light/50 hover:bg-glamour-gold/10 transition-colors">
+                <input
+                  type="file"
+                  ref={portfolioInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handlePortfolioImageChange}
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
