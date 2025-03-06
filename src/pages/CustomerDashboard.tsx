@@ -266,7 +266,6 @@ const CustomerDashboard = () => {
                                 bookingId={booking.id}
                                 onReviewSubmitted={() => {
                                   setOpenReviewFormFor(null);
-                                  // Optionally, you could refetch reviews here
                                 }}
                               />
                             ) : (

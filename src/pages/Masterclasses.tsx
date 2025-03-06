@@ -44,7 +44,7 @@ const Masterclasses = () => {
     <div className="min-h-screen bg-glamour-light">
       <Navigation />
       
-      <main className="container mx-auto px-4 py-20">
+      <main className="container mx-auto px-4 py-20 p-10">
         <h1 className="font-serif text-4xl text-glamour-dark text-center mb-12">
           Masterclasses
         </h1>

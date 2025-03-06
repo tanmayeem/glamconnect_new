@@ -29,7 +29,7 @@ export default {
           gold: "#E6B980",
           light: "#FEF9F9",
           dark: "#2D1D1E",
-          red: "#A31D1D",
+          red: "#C70039",
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Navigation from "@/components/Navigation";
 import {
   Award,
-  DollarSign,
+  IndianRupee,
   Users,
   Calendar,
   Star,
@@ -38,7 +38,15 @@ import { useAuth } from "../context/Authcontext";
 const ArtistDashboard = () => {
   const [activeSection, setActiveSection] = useState<"dashboard" | "profile">("dashboard");
   const [artistName, setArtistName] = useState("Loading...");
-  const [recentMessages, setRecentMessages] = useState<any[]>([]);
+  interface Message {
+    id: string;
+    customerName: string;
+    customerId: string;
+    date: string;
+    time: string;
+    createdAt: string;
+  }
+  const [recentMessages, setRecentMessages] = useState<Message[]>([]);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -110,7 +118,6 @@ const ArtistDashboard = () => {
     fetchRecentMessages();
   }, [currentUser]);
 
-  // Render dashboard content
   const renderDashboardContent = () => (
     <div className="space-y-12">
       <div className="relative">
@@ -137,9 +144,9 @@ const ArtistDashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {[
               {
-                icon: DollarSign,
+                icon: IndianRupee,
                 title: "Today's Revenue",
-                value: "$450",
+                value: "₹450",
                 subtext: "3 bookings completed",
                 trend: "+12.5%",
                 color: "from-glamour-red to-glamour-gold",

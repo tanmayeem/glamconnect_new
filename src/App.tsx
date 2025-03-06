@@ -1,9 +1,18 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Navigation from "./components/Navigation"; 
+import { AuthProvider } from "./context/Authcontext";
+
+// Components
+import Navigation from "./components/Navigation";
+import Booking from "./components/BookingSession";
+import UpdateSchedule from "./components/UpdateSchedule";
+import MasterclassDetails from "./components/MasterclassDetails";
+import ArtistViewsProfile from "./components/ArtistViewsProfile";
+
+// Pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SearchArtists from "./pages/SearchArtists";
@@ -15,10 +24,6 @@ import ArtistDashboard from "./pages/ArtistDashboard";
 import CustomerSignup from "./pages/CustomerSignup";
 import ArtistSignup from "./pages/ArtistSignup";
 import Login from "./pages/Login";
-import Booking from "./components/BookingSession";
-import { AuthProvider } from "./context/Authcontext";
-import UpdateSchedule from "./components/UpdateSchedule";
-import MasterclassDetails from "./components/MasterclassDetails";
 import CustomerProfile from "./pages/CustomerProfile";
 
 // Initialize Query Client
@@ -27,6 +32,16 @@ const queryClient = new QueryClient();
 // Simple Error Boundary Component
 const ErrorBoundary = ({ children }) => {
   const [hasError, setHasError] = useState(false);
+
+  React.useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error("ErrorBoundary caught an error", event.error, event.message);
+      setHasError(true);
+    };
+
+    window.addEventListener("error", handleError);
+    return () => window.removeEventListener("error", handleError);
+  }, []);
 
   if (hasError) {
     return (
@@ -45,14 +60,12 @@ const App = () => (
       <TooltipProvider>
         <div className="min-h-screen bg-glamour-light text-glamour-dark">
           <BrowserRouter>
-            {/* Global Navigation */}
             <Navigation />
-
-            {/* Main Content with Error Boundary */}
             <ErrorBoundary>
               <Sonner />
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/artistviewprofile/:artistId" element={<ArtistViewsProfile />} />
                 <Route path="/customer-profile" element={<CustomerProfile />} />
                 <Route path="/search" element={<SearchArtists />} />
                 <Route path="/customer-dashboard" element={<CustomerDashboard />} />

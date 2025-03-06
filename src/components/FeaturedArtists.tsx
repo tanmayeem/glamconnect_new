@@ -1,32 +1,37 @@
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebaseconfig";
 import { Star, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const FeaturedArtists = () => {
-  const artists = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      specialty: "Bridal & Editorial",
-      rating: 4.9,
-      reviews: 128,
-      image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2940&auto=format&fit=crop", // Makeup brushes
-    },
-    {
-      id: 2,
-      name: "Emma Davis",
-      specialty: "Celebrity & Fashion",
-      rating: 4.8,
-      reviews: 96,
-      image: "https://images.unsplash.com/photo-1512207043138-2cb13b4e6bde?q=80&w=2940&auto=format&fit=crop", // Glamorous face
-    },
-    {
-      id: 3,
-      name: "Maria Garcia",
-      specialty: "Special Effects & Beauty",
-      rating: 4.9,
-      reviews: 156,
-      image: "https://images.unsplash.com/photo-1600585154494-a261cb4a8827?q=80&w=2940&auto=format&fit=crop", // Artistic makeup
-    },
-  ];
+  const [artists, setArtists] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchArtists = async () => {
+      try {
+        const artistsCollection = collection(db, "artists");
+        const snapshot = await getDocs(artistsCollection);
+        const artistsList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setArtists(artistsList);
+      } catch (error) {
+        console.error("Error fetching artists:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArtists();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-20">Loading...</div>;
+  }
 
   return (
     <section className="py-20 bg-glamour-light">
@@ -46,7 +51,7 @@ const FeaturedArtists = () => {
             >
               <div className="relative h-72 overflow-hidden">
                 <img
-                  src={artist.image}
+                  src={artist.image || "https://via.placeholder.com/300"}
                   alt={`${artist.name}'s work`}
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                 />
@@ -73,7 +78,10 @@ const FeaturedArtists = () => {
                       {artist.rating} ({artist.reviews} reviews)
                     </span>
                   </div>
-                  <button className="font-sans text-sm bg-glamour-gold/20 text-white px-4 py-2 rounded-full hover:bg-gradient-glamour transition-all duration-300">
+                  <button
+                    className="font-sans text-sm bg-glamour-gold/20 text-white px-4 py-2 rounded-full hover:bg-gradient-glamour transition-all duration-300"
+                    onClick={() => navigate(`/artistviewprofile/${artist.id}`)}
+                  >
                     View Profile →
                   </button>
                 </div>

@@ -19,6 +19,7 @@ interface Profile {
   email: string;
   profilePicture: string;
   uid: string;
+  location :string;
   portfolio: string[];
   instagram: string;
   facebook: string;
@@ -41,6 +42,7 @@ const ArtistProfile = () => {
     email: "",
     profilePicture: "",
     uid: "",
+    location:"",
     portfolio: [],
     instagram: "",
     facebook: "",
@@ -64,9 +66,10 @@ const ArtistProfile = () => {
             experience: data.experience || "",
             specialties: data.specialties || "",
             phone: data.phone || "",
-            email: data.email || "",
+              email: data.email || "",
             profilePicture: data.profilePicture || "",
             uid: data.uid || "",
+            location : data.uid || "",
             portfolio: data.portfolio || [],
             instagram: data.instagram || "",
             facebook: data.facebook || "",
@@ -95,6 +98,7 @@ const ArtistProfile = () => {
         specialties: profile.specialties,
         phone: profile.phone,
         email: profile.email,
+        location : profile.location,
         profilePicture: profile.profilePicture,
         instagram: profile.instagram,
         facebook: profile.facebook,
@@ -135,6 +139,7 @@ const ArtistProfile = () => {
             email: data.email || "",
             profilePicture: data.profilePicture || "",
             uid: data.uid || "",
+            location : data.uid || "",
             portfolio: data.portfolio || [],
             instagram: data.instagram || "",
             facebook: data.facebook || "",
@@ -152,7 +157,7 @@ const ArtistProfile = () => {
     formData.append("file", file);
     formData.append("upload_preset", type === "profile" ? "Display_picture" : "portfolio");
     formData.append("cloud_name", "dznft1m2s");
-
+  
     try {
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/dznft1m2s/image/upload`,
@@ -160,7 +165,7 @@ const ArtistProfile = () => {
       );
       const data = await response.json();
       if (!data.secure_url) throw new Error("Upload failed");
-
+  
       if (currentUser) {
         const artistDoc = doc(db, "artists", currentUser.uid);
         if (type === "profile") {
@@ -181,7 +186,7 @@ const ArtistProfile = () => {
           setProfile((prev) => ({ ...prev, portfolio: updatedPortfolio }));
         }
       }
-
+  
       toast({
         title: type === "profile" ? "Profile Picture Updated!" : "Portfolio Image Uploaded!",
         description: `Your ${type === "profile" ? "profile picture" : "portfolio image"} has been saved.`,
@@ -201,7 +206,7 @@ const ArtistProfile = () => {
   const handleProfileImageClick = () => {
     profileInputRef.current?.click();
   };
-
+  
   const handlePortfolioImageClick = () => {
     if (profile.portfolio.length >= 5) {
       toast({
@@ -213,13 +218,14 @@ const ArtistProfile = () => {
     }
     portfolioInputRef.current?.click();
   };
-
+  
   const handlePortfolioImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       uploadImageToCloudinary(e.target.files[0], "portfolio");
     }
   };
-
+  
+  
   return (
     <div className="min-h-screen bg-glamour-light p-6 md:p-12">
       <div className="max-w-4xl mx-auto p-7">
@@ -354,6 +360,18 @@ const ArtistProfile = () => {
                   />
                 ) : (
                   <p className="text-sm text-glamour-dark/70">{profile.email}</p>
+                )}
+              </div>
+              <div>
+                <Label className="font-serif text-glamour-dark">Location</Label>
+                {isEditing ? (
+                  <Input
+                    value={profile.location}
+                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                    className="border-glamour-gold/20 focus:border-glamour-gold w-full"
+                  />
+                ) : (
+                  <p className="text-sm text-glamour-dark/70">{profile.location}</p>
                 )}
               </div>
               <div>

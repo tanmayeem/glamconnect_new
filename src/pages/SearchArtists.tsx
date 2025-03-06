@@ -15,17 +15,18 @@ interface Artist {
   specialties: string;
   rate?: number;
   profilePicture?: string;
+  location?: string;
 }
 
 const SearchArtists = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [savedArtistIds, setSavedArtistIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { toast } = useToast();
 
-  // Fetch all artists
   useEffect(() => {
     const fetchArtists = async () => {
       try {
@@ -63,6 +64,12 @@ const SearchArtists = () => {
 
     fetchSavedArtists();
   }, [currentUser]);
+
+  const filteredArtists = artists.filter((artist) => {
+    const matchesName = artist.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLocation = artist.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesName || matchesLocation;
+  });
 
   const toggleSaveArtist = async (artist: Artist) => {
     if (!currentUser) {
@@ -122,23 +129,23 @@ const SearchArtists = () => {
   return (
     <div className="min-h-screen bg-glamour-light">
       <Navigation />
-      
-      <main className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
+      <main className="container mx-auto px-4 py-20 ">
+        <div className="max-w-4xl mx-auto p-5">
           <div className="relative mb-8">
             <input
               type="text"
-              placeholder="Find Your Perfect Makeup Artist"
+              placeholder="Find Your Perfect Makeup Artist (Name or Location)"
               className="w-full h-14 pl-12 pr-4 rounded-full border-2 border-glamour-gold/20 focus:border-glamour-gold focus:outline-none font-sans"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-glamour-dark/40" />
           </div>
-
           {loading ? (
             <p>Loading artists...</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {artists.map((artist) => (
+              {filteredArtists.map((artist) => (
                 <div key={artist.uid} className="bg-white rounded-xl shadow-lg overflow-hidden">
                   <div className="h-48">
                     {artist.profilePicture ? (
@@ -151,13 +158,11 @@ const SearchArtists = () => {
                       <div className="w-full h-full bg-gradient-glamour" />
                     )}
                   </div>
-          
                   <div className="p-6">
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-serif text-xl text-glamour-dark">
                         {artist.name}
                       </h3>
-                      {/* Heart icon toggles save state */}
                       <button
                         type="button"
                         onClick={() => toggleSaveArtist(artist)}
@@ -175,6 +180,11 @@ const SearchArtists = () => {
                     <p className="text-sm text-glamour-dark/60 mb-4">
                       {artist.specialties}
                     </p>
+                    {artist.location && (
+                      <p className="text-sm text-glamour-dark/60 mb-4">
+                        Location: {artist.location}
+                      </p>
+                    )}
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-semibold">
                         ${artist.rate ? artist.rate : 150}/session
@@ -185,7 +195,6 @@ const SearchArtists = () => {
                         onClick={() => navigate(`/booking/${artist.uid}`)}
                       >
                         Book Now
-                        <a href={`//artist-profile/${artist.uid}`}></a>
                       </Button>
                     </div>
                   </div>
@@ -195,7 +204,6 @@ const SearchArtists = () => {
           )}
         </div>
       </main>
-
       <Footer />
     </div>
   );
