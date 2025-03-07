@@ -51,7 +51,7 @@ const FeaturedArtists = () => {
             >
               <div className="relative h-72 overflow-hidden">
                 <img
-                  src={artist.image || "https://via.placeholder.com/300"}
+                  src={artist.profilePicture || "https://via.placeholder.com/300"}
                   alt={`${artist.name}'s work`}
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                 />
@@ -80,7 +80,7 @@ const FeaturedArtists = () => {
                   </div>
                   <button
                     className="font-sans text-sm bg-glamour-gold/20 text-white px-4 py-2 rounded-full hover:bg-gradient-glamour transition-all duration-300"
-                    onClick={() => navigate(`/artistviewprofile/${artist.id}`)}
+                    onClick={() => navigate(`/artist/${artist.id}`)}
                   >
                     View Profile →
                   </button>

@@ -5,12 +5,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./context/Authcontext";
 
-// Components
 import Navigation from "./components/Navigation";
 import Booking from "./components/BookingSession";
 import UpdateSchedule from "./components/UpdateSchedule";
 import MasterclassDetails from "./components/MasterclassDetails";
-import ArtistViewsProfile from "./components/ArtistViewsProfile";
 
 // Pages
 import Index from "./pages/Index";
@@ -25,6 +23,7 @@ import CustomerSignup from "./pages/CustomerSignup";
 import ArtistSignup from "./pages/ArtistSignup";
 import Login from "./pages/Login";
 import CustomerProfile from "./pages/CustomerProfile";
+import ArtistViewProfile from "./components/ArtistViewsProfile";
 
 // Initialize Query Client
 const queryClient = new QueryClient();
@@ -65,7 +64,7 @@ const App = () => (
               <Sonner />
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/artistviewprofile/:artistId" element={<ArtistViewsProfile />} />
+                <Route path="/artist/:artistId" element={<ArtistViewProfile />} />
                 <Route path="/customer-profile" element={<CustomerProfile />} />
                 <Route path="/search" element={<SearchArtists />} />
                 <Route path="/customer-dashboard" element={<CustomerDashboard />} />
