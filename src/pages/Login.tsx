@@ -26,6 +26,7 @@ const Login = () => {
       const user = userCredential.user;
       const uid = user.uid;
 
+      // Check if the user is an artist
       const artistDocRef = doc(db, "artists", uid);
       const artistDoc = await getDoc(artistDocRef);
 
@@ -38,6 +39,7 @@ const Login = () => {
         return;
       }
 
+      // Check if the user is a customer
       const customerDocRef = doc(db, "customers", uid);
       const customerDoc = await getDoc(customerDocRef);
 
@@ -50,6 +52,7 @@ const Login = () => {
         return;
       }
 
+      // Default redirection if no specific role is found
       toast({
         title: "Login Successful",
         description: "Redirecting to default dashboard.",
@@ -213,4 +216,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;

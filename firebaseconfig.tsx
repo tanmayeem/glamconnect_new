@@ -4,7 +4,6 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage"; 
 
- 
 const firebaseConfig = {
   apiKey: "AIzaSyA5jR0yv8v3utMOPmOGlwIqRppbjiwQmJw",
   authDomain: "glamconnect-c6286.firebaseapp.com",

@@ -11,7 +11,7 @@ const Hero = () => {
         style={{
           backgroundImage: `
             linear-gradient(135deg, rgba(163, 29, 29, 0.6), rgba(230, 185, 128, 0.6)),
-            url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2940&auto=format&fit=crop')
+            url('https://images.unsplash.com/photo-1533562389935-457b1ae48a39?q=80&w=2970&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')
           `,
         }}
       />
@@ -43,28 +43,7 @@ const Hero = () => {
             </button>
           </div>
 
-          <div className="mt-12 flex items-center gap-4">
-            <div className="flex -space-x-2">
-              {[1, 2, 3].map((i) => (
-                <img
-                  key={i}
-                  src={`https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?crop=entropy&cs=tinysrgb&fit=crop&h=48&w=48`}
-                  alt="Artist avatar"
-                  className="w-12 h-12 rounded-full border-2 border-glamour-gold object-cover"
-                />
-              ))}
-            </div>
-            <div>
-              <div className="flex items-center gap-1">
-                {Array(5).fill(0).map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-glamour-gold text-glamour-gold drop-shadow" />
-                ))}
-              </div>
-              <p className="font-sans text-sm text-white/90 drop-shadow">
-                Trusted by 10,000+ glamorous clients
-              </p>
-            </div>
-          </div>
+        
         </div>
       </div>
     </div>
